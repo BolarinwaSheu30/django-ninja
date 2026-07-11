@@ -1,0 +1,9 @@
+{
+    "livePreview.openPreviewTarget": "External Browser",
+    "livePreview.customExternalBrowser": "Chrome",
+    "workbench.editor.enablePreviewFromQuickOpen": true,
+    "simpleBrowser.focusLockIndicator.enabled": false,
+    "workbench.browser.openLocalhostLinks": false,
+    "livePreview.useIntegratedBrowser": false,
+    "workbench.externalBrowser": "chrome"
+}
