@@ -10,6 +10,8 @@ from patients.api import router as patients_router
 
 from pregnancies.api import router as pregnancies_router
 
+from deliveries.api import router as deliveries_router
+
 # Main API instance
 api = NinjaAPI(
     title="Maternal Care Management System",
@@ -28,4 +30,8 @@ api.add_router(
 api.add_router(
     '/antenatal/',
     antenatal_router,
+)
+api.add_router(
+    "/deliveries/",
+    deliveries_router,
 )
