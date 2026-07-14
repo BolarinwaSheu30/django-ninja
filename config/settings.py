@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'pregnancies',
     'deliveries',
     'postnatal',
+    'gynaecology',
 ]
 
 MIDDLEWARE = [
