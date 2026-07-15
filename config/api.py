@@ -16,6 +16,8 @@ from postnatal.api import router as postnatal_router
 
 from gynaecology.api import router as gynaecology_router
 
+from users.api import router as users_router
+
 # Main API instance
 api = NinjaAPI(
     title="Maternal Care Management System",
@@ -46,4 +48,8 @@ api.add_router(
 api.add_router(
     "/gynaecology/",
     gynaecology_router,
+)
+api.add_router(
+    "/auth/",
+    users_router,
 )
