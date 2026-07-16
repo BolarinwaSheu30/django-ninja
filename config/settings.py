@@ -25,12 +25,12 @@ SECRET_KEY = 'django-insecure-q&l$q&yn_hc+du%1wsus10z#$@6(+mv1jx-wuy17ko88#x)7z&
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
 
 "localhost",
 "127.0.0.1",
 "django-ninja-dgat.onrender.com",
-
+]
 
 
 # Application definition
