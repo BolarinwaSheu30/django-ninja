@@ -1,6 +1,17 @@
 from ninja import Schema
 
 
+class RegisterUserSchema(Schema):
+    """
+    Create a new staff user.
+    """
+
+    username: str
+    password: str
+    role: str
+    phone_number: str = ""
+
+
 class LoginSchema(Schema):
     """
     User login request.
@@ -26,3 +37,13 @@ class UserProfileSchema(Schema):
 
     username: str
     role: str
+
+class RegisterUserSchema(Schema):
+    """
+    Create a new staff user.
+    """
+
+    username: str
+    password: str
+    role: str
+    phone_number: str = ""

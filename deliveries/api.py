@@ -7,6 +7,13 @@ from django.shortcuts import get_object_or_404
 from ninja import Router
 
 from .models import Delivery
+
+from users.auth import JWTAuth
+
+from users.permissions import require_roles
+
+from users.models import UserRole
+
 from pregnancies.models import (
     Pregnancy,
     PregnancyStatus,
@@ -18,12 +25,14 @@ from .schemas import (
     DeliveryListSchema,
 )
 
+auth = JWTAuth()
 router = Router()
 
 
 @router.post(
     "/",
     response=DeliveryResponseSchema,
+    auth = auth,
 )
 def create_delivery(
     request,
@@ -32,6 +41,17 @@ def create_delivery(
     """
     Record a delivery.
     """
+
+
+
+    # Only Doctors and Admins can create deliveries.
+    require_roles(
+        request.auth,
+        [
+            UserRole.DOCTOR,
+            UserRole.ADMIN,
+        ],
+    )
 
     # Retrieve the pregnancy.
     pregnancy = get_object_or_404(
