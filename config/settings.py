@@ -50,14 +50,16 @@ INSTALLED_APPS = [
     'postnatal',
     'gynaecology',
     'users',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -138,3 +140,12 @@ STORAGES = {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
     },
 }
+
+#frontend origins allowed to access the API
+CORS_ALLOWER_ORIGINS = [
+    "http://localhost:3000", # React local dev
+    "http://localhost:5173", # Vite local dev
+
+]
+# Allow cookies/authorization headers
+CORS_ALLOW_CREDENTIALS = True
