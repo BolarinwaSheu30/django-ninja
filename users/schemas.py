@@ -38,12 +38,31 @@ class UserProfileSchema(Schema):
     username: str
     role: str
 
-class RegisterUserSchema(Schema):
+
+class UserInfoSchema(Schema):
     """
-    Create a new staff user.
+    Basic user information returned after login.
     """
 
     username: str
-    password: str
     role: str
-    phone_number: str = ""
+
+
+class LoginDataSchema(Schema):
+    """
+    Login payload containing token and user info.
+    """
+
+    access_token: str
+    token_type: str
+    user: UserInfoSchema
+
+
+class LoginResponseSchema(Schema):
+    """
+    Standardized login response.
+    """
+
+    status: str
+    message: str
+    data: LoginDataSchema

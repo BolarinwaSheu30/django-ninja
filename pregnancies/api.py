@@ -4,6 +4,7 @@ Pregnancy API endpoints.
 
 # Import Django's shortcut for retrieving
 # an object or returning a 404 error.
+from typing import Optional
 from datetime import timedelta
 from django.shortcuts import get_object_or_404
 
@@ -93,11 +94,20 @@ def create_pregnancy(
     "/",
     response=list[PregnancyListSchema],
 )
-def list_pregnancies(request):
+def list_pregnancies(
+    request,
+    status:Optional[str] = None,
+    ):
     """
-    Retrieve all pregnancies.
+    Retrieve pregnancies with optional
+    status filtering.
     """
-
-    return Pregnancy.objects.select_related(
+    pregnancies = Pregnancy.objects.select_related(
         "patient"
     ).all()
+
+    if status:
+        pregnancies = pregnancies.filter(
+            pregnancy_status__iexact=status
+        )
+    return pregnancies

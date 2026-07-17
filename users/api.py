@@ -12,9 +12,9 @@ from .auth import (
 
 from .schemas import (
     LoginSchema,
-    TokenResponseSchema,
     UserProfileSchema,
     RegisterUserSchema,
+    LoginResponseSchema,
 )
 
 from .permissions import require_roles
@@ -26,7 +26,7 @@ router = Router()
 
 @router.post(
     "/login",
-    response=TokenResponseSchema,
+    response=LoginResponseSchema,
 )
 def login(
     request,
@@ -50,8 +50,16 @@ def login(
     token = create_access_token(user)
 
     return {
-        "access_token": token,
-        "token_type": "bearer",
+        "status": "success",
+        "message": "Login successful",
+        "data": {
+            "access_token": token,
+            "token_type": "bearer",
+            "user": {
+                "username": user.username,
+                "role": user.profile.role,
+            }
+        }
     }
 
 

@@ -2,9 +2,11 @@
 Patient API endpoints.
 """
 
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 
 from ninja import Router
+from typing import Optional
 
 from .models import Patient
 from .schemas import (
@@ -66,14 +68,26 @@ def create_patient(
     "/",
     response=list[PatientListSchema]
 )
-def list_patients(request):
+def list_patients(
+    request,
+    search:Optional[str] = None,
+    ):
     """
-    Retrieve all patients.
+    Retrieve all patients or search by patient ID,
+    first name, or last name.
 
     Returns a simplified patient list.
     """
+    patients = Patient.objects.all()
 
-    return Patient.objects.all()
+    if search:
+        patients = patients.filter(
+            Q(patient_id__icontains=search) |
+            Q(first_name__icontains=search) |
+            Q(last_name__icontains=search)
+        )
+
+    return patients
 
 @router.get(
     "/{patient_id}",
