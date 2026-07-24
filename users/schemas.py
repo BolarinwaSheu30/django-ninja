@@ -1,14 +1,22 @@
+"""
+Schemas for User Authentication.
+"""
+
 from ninja import Schema
 
 
 class RegisterUserSchema(Schema):
     """
-    Create a new staff user.
+    Data required to create
+    a new staff user.
     """
 
     username: str
+
     password: str
+
     role: str
+
     phone_number: str = ""
 
 
@@ -18,51 +26,27 @@ class LoginSchema(Schema):
     """
 
     username: str
+
     password: str
-
-
-class TokenResponseSchema(Schema):
-    """
-    JWT token response.
-    """
-
-    access_token: str
-    token_type: str = "bearer"
 
 
 class UserProfileSchema(Schema):
     """
-    Authenticated user information.
+    Authenticated user profile.
     """
 
     username: str
+
     role: str
 
 
 class UserInfoSchema(Schema):
     """
-    Basic user information returned after login.
+    Basic user information.
+
+    Used inside login responses.
     """
 
     username: str
+
     role: str
-
-
-class LoginDataSchema(Schema):
-    """
-    Login payload containing token and user info.
-    """
-
-    access_token: str
-    token_type: str
-    user: UserInfoSchema
-
-
-class LoginResponseSchema(Schema):
-    """
-    Standardized login response.
-    """
-
-    status: str
-    message: str
-    data: LoginDataSchema

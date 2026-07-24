@@ -1,56 +1,41 @@
 """
 Schemas for the Pregnancy API.
-
-Schemas define the structure of
-incoming requests and outgoing responses.
 """
 
-# Import Python's date type.
 from datetime import date
 
-# Import Django Ninja's Schema class.
 from ninja import Schema
 
-
-"""
-Schema used when creating
-a pregnancy record.
-"""
 
 class PregnancyCreateSchema(Schema):
     """
     Data required to register
     a new pregnancy.
 
-    The backend will calculate
-    the EDD and gestational age.
+    The backend calculates the
+    Estimated Date of Delivery (EDD)
+    and gestational age.
     """
 
-    # Database ID of the patient.
     patient_id: int
 
-    # Date of antenatal booking.
     booking_date: date
 
-    # Last Menstrual Period.
     lmp: date
 
-    # Number of pregnancies.
     gravida: int
 
-    # Number of deliveries.
     parity: int
 
-    # Current pregnancy status.
-    
-
-    # Optional notes.
     notes: str = ""
+
 
 class PregnancyResponseSchema(Schema):
     """
-    Schema returned when
-    retrieving a pregnancy.
+    Detailed pregnancy information.
+
+    Reserved for endpoints that return
+    a Pregnancy object directly.
     """
 
     id: int
@@ -58,12 +43,15 @@ class PregnancyResponseSchema(Schema):
     patient_id: str
 
     booking_date: date
+
     lmp: date
+
     edd: date
 
     gestational_age_weeks: int
 
     gravida: int
+
     parity: int
 
     pregnancy_status: str
@@ -79,10 +67,11 @@ class PregnancyResponseSchema(Schema):
 
         return obj.patient.patient_id
 
+
 class PregnancyListSchema(Schema):
     """
-    Lightweight schema for
-    listing pregnancies.
+    Lightweight pregnancy information
+    for list endpoints.
     """
 
     id: int
@@ -91,11 +80,28 @@ class PregnancyListSchema(Schema):
 
     booking_date: date
 
+    edd: date
+
+    gestational_age_weeks: int
+
     pregnancy_status: str
+
+    @staticmethod
+    def resolve_patient_id(obj):
+        """
+        Return the hospital patient ID.
+        """
+
+        return obj.patient.patient_id
+
 
 class ErrorSchema(Schema):
     """
-    Standard error response.
+    Legacy error schema.
+
+    This has been replaced by
+    ErrorResponseSchema in
+    config.common_schemas.
     """
 
     detail: str

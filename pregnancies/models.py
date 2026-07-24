@@ -1,16 +1,15 @@
+"""
+Pregnancy model.
+"""
+
 from django.db import models
 
-# Import the Patient model.
-# Every pregnancy belongs to one patient.
 from patients.models import Patient
 
 
 class PregnancyStatus(models.TextChoices):
     """
     Allowed pregnancy statuses.
-
-    Using TextChoices ensures that
-    only valid values are stored.
     """
 
     ONGOING = "Ongoing", "Ongoing"
@@ -22,62 +21,78 @@ class PregnancyStatus(models.TextChoices):
 
 class Pregnancy(models.Model):
     """
-    Represents a single pregnancy.
-
-    One patient can have multiple pregnancies.
+    Represents a pregnancy belonging
+    to a patient.
     """
 
-    # Link this pregnancy to a patient.
     patient = models.ForeignKey(
         Patient,
         on_delete=models.CASCADE,
         related_name="pregnancies",
     )
 
-    # Date the pregnancy was booked.
     booking_date = models.DateField()
 
-    # Last Menstrual Period.
     lmp = models.DateField()
 
-    # Estimated Date of Delivery.
-    edd = models.DateField()
+    edd = models.DateField(
+        db_index=True,
+    )
 
-    # Gestational age in completed weeks
-    # when the patient booked.
     gestational_age_weeks = models.PositiveIntegerField()
 
-    # Number of pregnancies.
     gravida = models.PositiveIntegerField()
 
-    # Number of deliveries after viability.
     parity = models.PositiveIntegerField()
 
-    # Current pregnancy status.
     pregnancy_status = models.CharField(
         max_length=20,
         choices=PregnancyStatus.choices,
         default=PregnancyStatus.ONGOING,
+        db_index=True,
     )
 
-    # Additional clinical notes.
     notes = models.TextField(
         blank=True,
         default="",
     )
 
-    # Date this record was created.
     created_at = models.DateTimeField(
         auto_now_add=True,
     )
 
-    def __str__(self):
+    class Meta:
+        ordering = ["-booking_date"]
+        verbose_name = "Pregnancy"
+        verbose_name_plural = "Pregnancies"
+
+        indexes = [
+            models.Index(
+                fields=[
+                    "patient",
+                    "pregnancy_status",
+                ]
+            ),
+        ]
+
+    @property
+    def is_active(self) -> bool:
         """
-        Display the pregnancy in
-        the Django admin.
+        Return True if the pregnancy
+        is still ongoing.
         """
 
         return (
-            f"{self.patient.patient_id} - "
-            f"{self.booking_date}"
+            self.pregnancy_status
+            == PregnancyStatus.ONGOING
+        )
+
+    def __str__(self) -> str:
+        """
+        Return a readable representation.
+        """
+
+        return (
+            f"{self.patient.patient_id}"
+            f" ({self.booking_date})"
         )

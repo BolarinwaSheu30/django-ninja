@@ -1,6 +1,9 @@
+"""
+Delivery model.
+"""
+
 from django.db import models
 
-# Import Pregnancy model.
 from pregnancies.models import Pregnancy
 
 
@@ -23,77 +26,105 @@ class BabyStatus(models.TextChoices):
     STILLBIRTH = "Stillbirth", "Stillbirth"
 
 
+class BabySex(models.TextChoices):
+    """
+    Baby sex.
+    """
+
+    MALE = "Male", "Male"
+    FEMALE = "Female", "Female"
+
+
 class Delivery(models.Model):
     """
     Stores delivery information.
     """
 
-    # One delivery belongs to one pregnancy.
     pregnancy = models.OneToOneField(
         Pregnancy,
         on_delete=models.CASCADE,
         related_name="delivery",
     )
 
-    # Date and time of delivery.
-    delivery_datetime = models.DateTimeField()
+    delivery_datetime = models.DateTimeField(
+        db_index=True,
+    )
 
-    # Mode of delivery.
     mode_of_delivery = models.CharField(
         max_length=20,
         choices=DeliveryMode.choices,
     )
 
-    # Baby sex.
     baby_sex = models.CharField(
         max_length=10,
+        choices=BabySex.choices,
     )
 
-    # Birth weight in kilograms.
     birth_weight_kg = models.DecimalField(
         max_digits=4,
         decimal_places=2,
     )
 
-    # Apgar score at 1 minute.
     apgar_1_min = models.PositiveIntegerField()
 
-    # Apgar score at 5 minutes.
     apgar_5_min = models.PositiveIntegerField()
 
-    # Baby status.
     baby_status = models.CharField(
         max_length=20,
         choices=BabyStatus.choices,
         default=BabyStatus.ALIVE,
+        db_index=True,
     )
 
-    # Estimated blood loss in mL.
     estimated_blood_loss_ml = models.PositiveIntegerField()
 
-    # Maternal complications.
     maternal_complications = models.TextField(
         blank=True,
         default="",
     )
 
-    # Additional notes.
     notes = models.TextField(
         blank=True,
         default="",
     )
 
-    # Record creation timestamp.
     created_at = models.DateTimeField(
         auto_now_add=True,
     )
 
-    def __str__(self):
+    class Meta:
+        ordering = [
+            "-delivery_datetime",
+        ]
+
+        verbose_name = "Delivery"
+        verbose_name_plural = "Deliveries"
+
+        indexes = [
+            models.Index(
+                fields=[
+                    "delivery_datetime",
+                    "baby_status",
+                ],
+            ),
+        ]
+
+    @property
+    def patient(self):
         """
-        Display delivery information.
+        Return the patient associated
+        with this delivery.
+        """
+
+        return self.pregnancy.patient
+
+    def __str__(self) -> str:
+        """
+        Return a readable
+        representation.
         """
 
         return (
-            f"{self.pregnancy.patient.patient_id} - "
-            f"{self.delivery_datetime.date()}"
+            f"{self.patient.patient_id}"
+            f" - {self.delivery_datetime.date()}"
         )

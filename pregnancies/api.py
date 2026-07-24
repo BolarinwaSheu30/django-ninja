@@ -2,36 +2,104 @@
 Pregnancy API endpoints.
 """
 
-# Import Django's shortcut for retrieving
-# an object or returning a 404 error.
+from datetime import date, timedelta
 from typing import Optional
-from datetime import timedelta
-from django.shortcuts import get_object_or_404
 
-# Import Django Ninja's Router.
 from ninja import Router
 
-# Import our models.
-from .models import Pregnancy, PregnancyStatus
-from patients.models import Patient
-
-# Import our schemas.
-from .schemas import (
-    PregnancyCreateSchema,
-    PregnancyResponseSchema,
-    PregnancyListSchema,
-    ErrorSchema
+from config.common_schemas import (
+    SuccessResponseSchema,
+    ErrorResponseSchema,
+)
+from config.utils import (
+    success_response,
+    error_response,
 )
 
-# Create a router for pregnancy endpoints.
+from patients.models import Patient
+
+from .models import Pregnancy, PregnancyStatus
+from .schemas import PregnancyCreateSchema
+
+
 router = Router()
+
+
+def _pregnancy_to_dict(
+    pregnancy: Pregnancy,
+) -> dict:
+    """
+    Convert a Pregnancy model instance
+    into a detailed dictionary.
+    """
+
+    return {
+        "id": pregnancy.id,
+        "patient_id": pregnancy.patient.patient_id,
+        "booking_date": pregnancy.booking_date,
+        "lmp": pregnancy.lmp,
+        "edd": pregnancy.edd,
+        "gestational_age_weeks": pregnancy.gestational_age_weeks,
+        "gravida": pregnancy.gravida,
+        "parity": pregnancy.parity,
+        "pregnancy_status": pregnancy.pregnancy_status,
+        "notes": pregnancy.notes,
+    }
+
+
+def _pregnancy_list_to_dict(
+    pregnancy: Pregnancy,
+) -> dict:
+    """
+    Convert a Pregnancy model instance
+    into a lightweight dictionary.
+    """
+
+    return {
+        "id": pregnancy.id,
+        "patient_id": pregnancy.patient.patient_id,
+        "booking_date": pregnancy.booking_date,
+        "edd": pregnancy.edd,
+        "gestational_age_weeks": pregnancy.gestational_age_weeks,
+        "pregnancy_status": pregnancy.pregnancy_status,
+    }
+
+
+def _calculate_pregnancy_dates(
+    booking_date: date,
+    lmp: date,
+) -> tuple[date, int]:
+    """
+    Calculate EDD and gestational age.
+    """
+
+    edd = lmp + timedelta(days=280)
+
+    gestational_age_weeks = (
+        booking_date - lmp
+    ).days // 7
+
+    return edd, gestational_age_weeks
+
+
+def _get_patient(
+    patient_id: int,
+):
+    """
+    Retrieve a patient by ID.
+    """
+
+    return Patient.objects.filter(
+        id=patient_id,
+    ).first()
 
 
 @router.post(
     "/",
     response={
-        200: PregnancyResponseSchema,
-        400: ErrorSchema,
+        200: SuccessResponseSchema,
+        400: ErrorResponseSchema,
+        404: ErrorResponseSchema,
     },
 )
 def create_pregnancy(
@@ -42,72 +110,84 @@ def create_pregnancy(
     Register a new pregnancy.
     """
 
-    # Find the patient using the ID
-    # supplied in the request.
-    patient = get_object_or_404(
-        Patient,
-        id=payload.patient_id,
+    patient = _get_patient(
+        payload.patient_id,
     )
-    # Check whether the patient already has
-    # an ongoing pregnancy.
-    existing_pregnancy = Pregnancy.objects.filter(
+
+    if not patient:
+        return error_response(
+            "Patient not found",
+            404,
+        )
+
+    if Pregnancy.objects.filter(
         patient=patient,
         pregnancy_status=PregnancyStatus.ONGOING,
-    ).exists()
-    # Prevent creating another ongoing pregnancy.
-    if existing_pregnancy:
-        return 400, {
-            "detail": (
-                "This patient already has "
-                "an ongoing pregnancy."
-            )
-    }
-    edd = payload.lmp + timedelta(days=280)
-    days_pregnant = (
-        payload.booking_date - payload.lmp
-    ).days
+    ).exists():
+        return error_response(
+            "This patient already has an ongoing pregnancy.",
+            400,
+        )
 
-    gestational_age_weeks = (
-        days_pregnant // 7
+    if payload.booking_date < payload.lmp:
+        return error_response(
+            "Booking date cannot be earlier than LMP.",
+            400,
+        )
+
+    edd, gestational_age_weeks = _calculate_pregnancy_dates(
+        payload.booking_date,
+        payload.lmp,
     )
 
-    # Create the pregnancy.
     pregnancy = Pregnancy.objects.create(
         patient=patient,
         booking_date=payload.booking_date,
         lmp=payload.lmp,
-
-    # Use the values calculated by the backend.
         edd=edd,
         gestational_age_weeks=gestational_age_weeks,
-
         gravida=payload.gravida,
         parity=payload.parity,
-        # Every new pregnancy starts as ongoing
-        pregnancy_status= PregnancyStatus.ONGOING,
+        pregnancy_status=PregnancyStatus.ONGOING,
         notes=payload.notes,
     )
-    # Return the newly created pregnancy.
-    return pregnancy
+
+    return success_response(
+        "Pregnancy registered successfully",
+        _pregnancy_to_dict(
+            pregnancy,
+        ),
+    )
+
 
 @router.get(
     "/",
-    response=list[PregnancyListSchema],
+    response=SuccessResponseSchema,
 )
 def list_pregnancies(
     request,
-    status:Optional[str] = None,
-    ):
+    status: Optional[str] = None,
+):
     """
     Retrieve pregnancies with optional
     status filtering.
     """
+
     pregnancies = Pregnancy.objects.select_related(
-        "patient"
-    ).all()
+        "patient",
+    ).order_by("-id")
 
     if status:
         pregnancies = pregnancies.filter(
-            pregnancy_status__iexact=status
+            pregnancy_status__iexact=status,
         )
-    return pregnancies
+
+    return success_response(
+        "Pregnancies retrieved successfully",
+        [
+            _pregnancy_list_to_dict(
+                pregnancy,
+            )
+            for pregnancy in pregnancies
+        ],
+    )

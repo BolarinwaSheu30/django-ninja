@@ -1,28 +1,38 @@
+"""
+Authentication utilities for JWT-based authentication.
+"""
+
+from datetime import timedelta
+
 import jwt
 
-from datetime import datetime, timedelta
-
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
+from django.utils import timezone
+
 from ninja.security import HttpBearer
 
-# Secret key for signing JWTs.
-SECRET_KEY = settings.SECRET_KEY
+from config.settings import SECRET_KEY
 
-# Token expiry time.
+
+# JWT configuration.
+
+JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 
-def create_access_token(user: User):
+def create_access_token(
+    user: User,
+) -> str:
     """
     Generate a JWT access token.
     """
 
     expire = (
-        datetime.utcnow()
+        timezone.now()
         + timedelta(
-            minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+            minutes=ACCESS_TOKEN_EXPIRE_MINUTES,
         )
     )
 
@@ -35,16 +45,17 @@ def create_access_token(user: User):
     return jwt.encode(
         payload,
         SECRET_KEY,
-        algorithm="HS256",
+        algorithm=JWT_ALGORITHM,
     )
 
 
 def authenticate_user(
     username: str,
     password: str,
-):
+) -> User | None:
     """
-    Validate username and password.
+    Authenticate a user using
+    Django's authentication system.
     """
 
     return authenticate(
@@ -53,26 +64,31 @@ def authenticate_user(
     )
 
 
-
-
 class JWTAuth(HttpBearer):
     """
-    Authenticate requests using JWT.
+    Authenticate requests using JWT tokens.
     """
 
-    def authenticate(self, request, token):
+    def authenticate(
+        self,
+        request,
+        token: str,
+    ) -> User | None:
+        """
+        Validate the supplied JWT token
+        and return the authenticated user.
+        """
+
         try:
             payload = jwt.decode(
                 token,
                 SECRET_KEY,
-                algorithms=["HS256"],
+                algorithms=[JWT_ALGORITHM],
             )
 
-            user = User.objects.get(
-                id=payload["user_id"]
+            return User.objects.get(
+                id=payload["user_id"],
             )
-
-            return user
 
         except (
             jwt.ExpiredSignatureError,
@@ -80,4 +96,3 @@ class JWTAuth(HttpBearer):
             User.DoesNotExist,
         ):
             return None
-

@@ -1,12 +1,15 @@
+"""
+Postnatal Care models.
+"""
+
 from django.db import models
 
-# Import Delivery model.
 from deliveries.models import Delivery
 
 
 class BreastfeedingStatus(models.TextChoices):
     """
-    Breastfeeding status options.
+    Available breastfeeding status options.
     """
 
     EXCLUSIVE = "Exclusive", "Exclusive"
@@ -19,20 +22,20 @@ class BreastfeedingStatus(models.TextChoices):
 
 class PostnatalVisit(models.Model):
     """
-    Stores postnatal care visit information.
+    Stores information collected during
+    a postnatal care visit.
     """
 
-    # Link visit to a delivery.
+    # Related delivery.
     delivery = models.ForeignKey(
         Delivery,
         on_delete=models.CASCADE,
         related_name="postnatal_visits",
     )
 
-    # Date of the postnatal visit.
+    # Visit details.
     visit_date = models.DateField()
 
-    # Visit number.
     visit_number = models.PositiveIntegerField()
 
     # Maternal observations.
@@ -47,27 +50,19 @@ class PostnatalVisit(models.Model):
 
     pulse_rate = models.PositiveIntegerField()
 
-    # Lochia assessment.
     lochia = models.CharField(
         max_length=50,
         blank=True,
         default="",
     )
 
-    # Breastfeeding status.
-    breastfeeding_status = models.CharField(
-        max_length=30,
-        choices=BreastfeedingStatus.choices,
-    )
-
-    # Wound healing assessment.
     wound_healing = models.CharField(
         max_length=100,
         blank=True,
         default="",
     )
 
-    # Baby assessment.
+    # Infant assessment.
     baby_weight_kg = models.DecimalField(
         max_digits=4,
         decimal_places=2,
@@ -81,12 +76,18 @@ class PostnatalVisit(models.Model):
         default=False,
     )
 
-    # Family planning counseling.
+    # Breastfeeding.
+    breastfeeding_status = models.CharField(
+        max_length=30,
+        choices=BreastfeedingStatus.choices,
+    )
+
+    # Family planning.
     family_planning_counseled = models.BooleanField(
         default=False,
     )
 
-    # Next appointment.
+    # Follow-up.
     next_appointment_date = models.DateField(
         null=True,
         blank=True,
@@ -98,17 +99,22 @@ class PostnatalVisit(models.Model):
         default="",
     )
 
-    # Record creation timestamp.
+    # Audit information.
     created_at = models.DateTimeField(
         auto_now_add=True,
     )
 
+    class Meta:
+        ordering = ["-visit_date", "-id"]
+        verbose_name = "Postnatal Visit"
+        verbose_name_plural = "Postnatal Visits"
+
     def __str__(self):
         """
-        Display postnatal visit information.
+        Return a readable representation.
         """
 
         return (
-            f"{self.delivery.pregnancy.patient.patient_id} - "
-            f"PNC Visit {self.visit_number}"
+            f"{self.delivery.pregnancy.patient.patient_id} "
+            f"- PNC Visit {self.visit_number}"
         )

@@ -1,12 +1,11 @@
 from django.db import models
 
-# Import Patient model.
 from patients.models import Patient
 
 
 class ConsultationType(models.TextChoices):
     """
-    Types of gynaecology consultations.
+    Allowed consultation types.
     """
 
     ROUTINE = "Routine Checkup", "Routine Checkup"
@@ -23,10 +22,11 @@ class ConsultationType(models.TextChoices):
 
 class GynecologyConsultation(models.Model):
     """
-    Stores gynaecology consultation records.
+    Stores a patient's gynaecology
+    consultation record.
     """
 
-    # Link consultation to a patient.
+    # Patient receiving the consultation.
     patient = models.ForeignKey(
         Patient,
         on_delete=models.CASCADE,
@@ -36,7 +36,7 @@ class GynecologyConsultation(models.Model):
     # Consultation date.
     consultation_date = models.DateField()
 
-    # Type of consultation.
+    # Consultation category.
     consultation_type = models.CharField(
         max_length=30,
         choices=ConsultationType.choices,
@@ -51,13 +51,13 @@ class GynecologyConsultation(models.Model):
         default="",
     )
 
-    # Examination findings.
+    # Physical examination findings.
     examination_findings = models.TextField(
         blank=True,
         default="",
     )
 
-    # Diagnosis.
+    # Clinical diagnosis.
     diagnosis = models.TextField(
         blank=True,
         default="",
@@ -86,9 +86,18 @@ class GynecologyConsultation(models.Model):
         auto_now_add=True,
     )
 
+    class Meta:
+        ordering = ["-consultation_date", "-id"]
+        verbose_name = (
+            "Gynaecology Consultation"
+        )
+        verbose_name_plural = (
+            "Gynaecology Consultations"
+        )
+
     def __str__(self):
         """
-        Display consultation information.
+        Human-readable representation.
         """
 
         return (
